@@ -1,3 +1,4 @@
+*.pth
 FlagNet_data/
 README.md
 sets/
