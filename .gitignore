@@ -1,5 +1,5 @@
 checkpoints/
-FlagNet_data/
+flagnet-data/
 sets/
 .env
 input/
