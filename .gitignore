@@ -1,7 +1,6 @@
 checkpoints/
 flagnet-data/
 sets/
-.env
 input/
 output/
 
