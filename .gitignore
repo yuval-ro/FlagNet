@@ -3,6 +3,7 @@ FlagNet_data/
 sets/
 .env
 input/
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,22 @@
+[
+	{
+		"1":"australia",
+		"2":"brazil",
+		"3":"canada",
+		"4":"china",
+		"5":"france",
+		"6":"germany",
+		"7":"india",
+		"8":"israel",
+		"9":"italy",
+		"10":"japan",
+		"11":"russia",
+		"12":"spain",
+		"13":"sweden",
+		"14":"uk",
+		"15":"usa"
+	},
+	{
+		"images_per_class":30
+	}
+]
