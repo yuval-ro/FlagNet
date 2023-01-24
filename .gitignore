@@ -1,6 +1,8 @@
 *.pth
 FlagNet_data/
 sets/
+.env
+input/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
