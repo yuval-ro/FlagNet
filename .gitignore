@@ -3,6 +3,7 @@ flagnet-data/
 sets/
 input/
 output/
+dotenv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -84,4 +84,4 @@ def latestCheckpoint(path=consts.checkpoints_path, format=consts.checkpoint_time
         return None
     else:
         latest_checkpoint = (sorted(checkpoints, key=lambda x: x[0])[-1])[1]
-        return path + '\\' + latest_checkpoint # string - path to .pth file
+        return path + '/' + latest_checkpoint # string - path to .pth file
