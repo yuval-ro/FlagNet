@@ -4,8 +4,12 @@ import time
 # external:
 import torch
 import torchvision
+# custom:
+import consts
+
 
 ''' Routines for Model Training  '''
+
 
 # Training sequence for a single batch.
 #  Returns the calculated loss for metadata collection:
@@ -22,8 +26,8 @@ def train(hyperparams, inputs, labels):
     # Perform back-propagation with the calculated loss using the defined optimizer:
     loss.backward()
     optimizer.step()
-
     return loss.item()
+
 
 # Testing sequence for a single batch, which also applies for validation.
 #  Returns a tuple of loss and accuracy for metadata collection:
@@ -40,8 +44,8 @@ def test(hyperparams, inputs, labels):
     top_probability, top_class = probabilities.topk(1, dim = 1)
     equals = (top_class == labels.view(*top_class.shape))
     acc = torch.mean(equals.type(torch.FloatTensor)).item()
-
     return (loss.item(), acc)
+
 
 # Aggregating a single epoch's metadata:
 def collect(list, metadata):
@@ -52,29 +56,29 @@ def collect(list, metadata):
                 (vloss / len(loaders[1])),   # epoch validation loss
                 (acc / len(loaders[1]))])    # epoch accuracy
 
+
 # Template for loading a .pth file checkpoint.
 #  returns a model object:
 def loadCheckpoint(file_path, weights):
     checkpoint = torch.load(file_path)
-    learning_rate = checkpoint['learning_rate']
     model = getattr(torchvision.models, checkpoint['network'])(weights=weights)
     model.classifier = checkpoint['classifier']
     model.epochs = checkpoint['epochs']
     model.optimizer = checkpoint['optimizer']
     model.load_state_dict(checkpoint['state_dict'])
     model.class_to_idx = checkpoint['class_to_idx']
-    
     return model
+
 
 # Sorts all checkpoints in root dir by their filename,
 #  which tells their creation date (ascending order).
 # Returns the latest checkpoint path from root:
-def latestCheckpoint(path='./checkpoints', timestamp_format='%H%M%S_%d%m%y'):
+def latestCheckpoint(path=consts.checkpoints_path, format=consts.checkpoint_timestamp_format):
     checkpoints = []
     for file in os.listdir(path):
         if file.endswith('.pth'):
-            filename, ext = os.path.splitext(file)
-            filename_date_tuple = (time.strptime(filename, timestamp_format), file)
+            filename, _ = os.path.splitext(file) # strips file extension from string
+            filename_date_tuple = (time.strptime(filename, format), file)
             checkpoints.append(filename_date_tuple)
     if checkpoints == []:
         return None
