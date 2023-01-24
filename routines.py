@@ -1,4 +1,9 @@
+# vanilla:
+import os
+import time
+# external:
 import torch
+import torchvision
 
 ''' Routines for Model Training  '''
 
@@ -46,3 +51,33 @@ def collect(list, metadata):
                 (tloss / len(loaders[0])),   # epoch training loss
                 (vloss / len(loaders[1])),   # epoch validation loss
                 (acc / len(loaders[1]))])    # epoch accuracy
+
+# Template for loading a .pth file checkpoint.
+#  returns a model object:
+def loadCheckpoint(file_path, weights):
+    checkpoint = torch.load(file_path)
+    learning_rate = checkpoint['learning_rate']
+    model = getattr(torchvision.models, checkpoint['network'])(weights=weights)
+    model.classifier = checkpoint['classifier']
+    model.epochs = checkpoint['epochs']
+    model.optimizer = checkpoint['optimizer']
+    model.load_state_dict(checkpoint['state_dict'])
+    model.class_to_idx = checkpoint['class_to_idx']
+    
+    return model
+
+# Sorts all checkpoints in root dir by their filename,
+#  which tells their creation date (ascending order).
+# Returns the latest checkpoint path from root:
+def latestCheckpoint(path='./checkpoints', timestamp_format='%H%M%S_%d%m%y'):
+    checkpoints = []
+    for file in os.listdir(path):
+        if file.endswith('.pth'):
+            filename, ext = os.path.splitext(file)
+            filename_date_tuple = (time.strptime(filename, timestamp_format), file)
+            checkpoints.append(filename_date_tuple)
+    if checkpoints == []:
+        return None
+    else:
+        latest_checkpoint = (sorted(checkpoints, key=lambda x: x[0])[-1])[1]
+        return path + '\\' + latest_checkpoint # string - path to .pth file

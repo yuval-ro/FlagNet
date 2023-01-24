@@ -1,4 +1,4 @@
-*.pth
+checkpoints/
 FlagNet_data/
 sets/
 .env
