@@ -1,6 +1,5 @@
-# Display functions definitions
-
 import numpy as np
+
 
 class Style:
 	DEFAULT =	'\033[0m'

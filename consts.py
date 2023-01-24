@@ -15,7 +15,7 @@ checkpoints_path=f'./{checkpoints_dirname}'
 checkpoint_timestamp_format ='%H%M%S_%d%m%y'
 
 
-#tester
+# tester
 valid_filetypes = ('.jpg', '.png', '.jpeg')
 input_path = './input/'
 output_path = './output/'
