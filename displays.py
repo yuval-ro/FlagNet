@@ -1,7 +1,15 @@
 import numpy as np
+import torch
 
+COLOR_ALIAS = [ 'red', 'r', 'red Bold', 'rB',
+                'green', 'g', 'green Bold', 'gB',
+                'yellow', 'y', 'yellow Bold', 'yB',
+                'blue', 'b', 'blue Bold', 'bB']
+STR_FORMAT = '{0:<{1}}'
+WIDTH = 20
 
 class Style:
+	END =       '\033[0m'
 	DEFAULT =	'\033[0m'
 	BOLD = 		'\033[1m'
 	BLACK = 	'\033[30m'
@@ -13,69 +21,141 @@ class Style:
 	CYAN =		'\033[36m'
 	WHITE =		'\033[37m'
 
-def color(color, bold=False):
-	if color in ['d', 'default']:
-		return (Style.DEFAULT if not bold else Style.BOLD+Style.DEFAULT)
-	if color in ['r', 'red']:
-		return (Style.RED if not bold else Style.BOLD+Style.RED)
-	if color in ['g', 'green']:
-		return (Style.GREEN if not bold else Style.BOLD+Style.GREEN)
-	if color in ['y', 'yellow']:
-		return (Style.YELLOW if not bold else Style.BOLD+Style.YELLOW)
-	else:
-		raise SystemExit(f'passed unfamilier parameters passed to color()')
+def color(clr: str = None) -> str:
+	if clr == None:
+		return Style.END
+	if clr not in COLOR_ALIAS:
+		raise SystemExit(f'color() got an unfamillier color code \'{clr}\'')
+	if clr in ['red', 'r', 'rB']:
+		return Style.RED if color != 'rB' else Style.BOLD + Style.RED
+	if clr in ['green', 'g', 'gB']:
+		return Style.GREEN if color != 'gB' else Style.BOLD + Style.GREEN
+	if clr in ['yellow', 'y', 'yB']:
+		return Style.YELLOW if color != 'yB' else Style.BOLD + Style.YELLOW
+	if clr in ['blue', 'b', 'bB']:
+		return Style.BLUE if color != 'bB' else Style.BOLD + Style.BLUE
+	pass
 
-def println(strings, width=20, header=False):
-	if header: # header lines
-		for idx, s in enumerate(strings):
-			if isinstance(s, tuple):
-				SystemExit(f'passed a tuple while header=True')
-			else:
-				print(Style.BOLD+('{0:<{1}}').format(str(s), width), end='')
-			if idx == (len(strings) - 1):
-				print(color('d'))
-	else:
-		for idx, s in enumerate(strings):
-			if isinstance(s, tuple): # color or bold applied
-				print((color(s[1])+('{0:<{1}.3f}').format((s[0]), width) if isinstance(s[0], float) else color(s[1])+('{0:<{1}}').format(str(s[0]), width)), end='')
+def print_line(inputs: list,
+    width: int = WIDTH) -> None:
+    VALID_TYPES = [str, float, int]
+    # correct = lambda x: FLOAT_FORMAT if isinstance(x, float) else STR_FORMAT
+    correct = lambda x: STR_FORMAT
+    for idx, item in enumerate(inputs):
+        if any(isinstance(item, t) for t in VALID_TYPES):
+            print(
+                Style.DEFAULT +
+                correct(item).format(item, width),
+                end=''
+                )
+        elif isinstance(item, tuple) and len(item) == 2:
+            s, clr = item
+            print(
+                color(clr) +
+                correct(s).format(s, width),
+                end=''
+                )
+        else:
+            raise SystemExit(f'unknown argument passed to print_line(): \'{item}\'')
+        if idx == (len(inputs) - 1):
+            print(Style.END)
 
-			else: # no color or bold needed
-				print(color('d')+(('{0:<{1}.3f}').format(s, width) if isinstance(s, float) else color('d')+('{0:<{1}}').format(str(s), width)), end='')
+def print_header(inputs: list[str],
+    width: int = WIDTH) -> None:
+    for idx, s in enumerate(inputs):
+        print(Style.BOLD + STR_FORMAT.format(s, width), end='')
+        if idx == (len(inputs) - 1):
+            print(Style.END)
 
-			if idx == (len(strings) - 1):
-				print(color('d'))
+def chunkifier(items: list,
+    size: int) -> list:
+  for i in range(0, len(items), size):
+    yield items[i : i+size]
 
-def seconds_to_time(seconds, hrs=False):
+def print_matrix(items: list[tuple],
+    rows: int = None,
+    cols: int = None,
+    vector: bool = False) -> None:
+    flag = False
+    if rows == None and cols == None:
+        if vector == True:
+            rows = len(items)
+            cols = 1
+        else:
+            cols = len(items)
+            rows = 1
+
+    # rows supplied, cols not:
+    elif rows != None and cols == None:
+        if rows > len(items) or rows <= 0:
+            raise SystemExit('bad dim')
+        cols = int(np.ceil(len(items) / rows))
+    # cols supplied, rows not:
+    elif rows == None and cols != None:
+        if cols > len(items) or cols <= 0:
+            raise SystemExit('bad dim')
+        rows = int(np.ceil(len(items) / cols))
+        flag = True
+    # both supplied:
+    if any([rows * cols < len(items),
+            cols >= len(items) and rows > 1,
+            rows >= len(items) and cols > 1]):
+            raise SystemExit('bad dim')
+
+    if flag: # split to n-sized chunks
+        x = chunkifier(items, cols)
+    else: # split to n chunks
+        x = np.array_split(items, rows)
+    for row in x:
+        headers = []
+        data = []
+        for tup in row:
+            headers.append(tup[0])
+            data.append(tup[1])
+        print_header(headers)
+        print_line(data)
+        print()
+
+def print_msg(msg: str,
+    clr: str = 'y') -> None:
+	print(color(clr) + msg + color())
+
+def seconds_to_time(seconds: float,
+    hrs: bool = False):
     if hrs:
         return '%02d:%02d:%02d'%((seconds // 3600), (seconds // 60), (round(seconds % 60)))
     else:
         return '%02d:%02d'%((seconds // 60), (round(seconds % 60)))
 
-# Defining a routine for displaying a single epoch's metadata,
-#  or an entire epoch list's metadata (depends if param 'idx' was supplied):
-def displayTrain(list, idx=None):
-    if idx is not None:
-        println([list[idx][0],
-                seconds_to_time(list[idx][1]),
-                list[idx][2],
-                list[idx][3],
-                list[idx][4]])
-    else:
-        println(['epochs',
-                'total time',
-                'mean train loss',
-                'mean valid loss',
-                'mean accuracy'], header=True)
-        println([len(list),
-                seconds_to_time(
-                np.sum([item[1] for item in list])
-                ),
-                np.mean([item[2] for item in list]),
-                np.mean([item[3] for item in list]),
-                np.mean([item[4] for item in list]),
-            ])
+# Defining a routine for displaying a single epoch's metadata:
+def print_epoch(data: list[tuple],
+    i: int) -> None:
+    print_line([
+        data[i][0],
+        seconds_to_time(data[i][1]),
+        data[i][2],
+        data[i][3],
+        data[i][4]
+    ])
+
+# Defining a routine for displaying a summary of a training session's collected metadata:
+def print_train_summary(data: list[tuple]) -> None:
+    print_matrix([
+        ('epochs',          len(data)),
+        ('total time',      seconds_to_time(np.sum([item[1] for item in data])),),
+        ('mean train loss', np.mean([item[2] for item in data])),
+        ('mean valid loss', np.mean([item[2] for item in data])),
+        ('mean accuracy',   np.mean([item[4] for item in data])),
+    ])
 
 # Defining a routine for displaying a single testing pass metadata,):
-def displayTest(loss, acc, loader):
-    println(['', '', 'loss', '', 'accuracy'], header=True)
-    println(['', '', (loss / len(loader)), '', (acc / len(loader))])
+def print_test_summary(loss: float,
+    acc: float,
+    loader: torch.utils.data.DataLoader) -> None:
+    print_matrix([
+        ('',        ''),
+        ('',        ''),
+        ('loss',    loss / len(loader)),
+        ('',        ''),
+        ('accuracy', acc / len(loader))
+    ])
