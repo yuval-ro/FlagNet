@@ -101,7 +101,7 @@ def print_matrix(items: list[tuple],
             cols >= len(items) and rows > 1,
             rows >= len(items) and cols > 1]):
             raise SystemExit('bad dim')
-
+            
     if flag: # split to n-sized chunks
         x = chunkifier(items, cols)
     else: # split to n chunks
