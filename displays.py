@@ -6,6 +6,7 @@ COLOR_ALIAS = [ 'red', 'r', 'red Bold', 'rB',
                 'yellow', 'y', 'yellow Bold', 'yB',
                 'blue', 'b', 'blue Bold', 'bB']
 STR_FORMAT = '{0:<{1}}'
+FLOAT_FORMAT = '{0:<{1}.3f}'
 WIDTH = 20
 
 class Style:
@@ -37,10 +38,9 @@ def color(clr: str = None) -> str:
 	pass
 
 def print_line(inputs: list,
-    width: int = WIDTH) -> None:
+               width: int = WIDTH) -> None:
     VALID_TYPES = [str, float, int]
-    # correct = lambda x: FLOAT_FORMAT if isinstance(x, float) else STR_FORMAT
-    correct = lambda x: STR_FORMAT
+    correct = lambda x: FLOAT_FORMAT if isinstance(x, float) else STR_FORMAT
     for idx, item in enumerate(inputs):
         if any(isinstance(item, t) for t in VALID_TYPES):
             print(
@@ -61,14 +61,14 @@ def print_line(inputs: list,
             print(Style.END)
 
 def print_header(inputs: list[str],
-    width: int = WIDTH) -> None:
+                 width: int = WIDTH) -> None:
     for idx, s in enumerate(inputs):
         print(Style.BOLD + STR_FORMAT.format(s, width), end='')
         if idx == (len(inputs) - 1):
             print(Style.END)
 
 def chunkifier(items: list,
-    size: int) -> list:
+               size: int) -> list:
   for i in range(0, len(items), size):
     yield items[i : i+size]
 
@@ -77,6 +77,7 @@ def print_matrix(items: list[tuple],
     cols: int = None,
     vector: bool = False) -> None:
     flag = False
+    # default values:
     if rows == None and cols == None:
         if vector == True:
             rows = len(items)
@@ -84,7 +85,6 @@ def print_matrix(items: list[tuple],
         else:
             cols = len(items)
             rows = 1
-
     # rows supplied, cols not:
     elif rows != None and cols == None:
         if rows > len(items) or rows <= 0:
@@ -97,15 +97,15 @@ def print_matrix(items: list[tuple],
         rows = int(np.ceil(len(items) / cols))
         flag = True
     # both supplied:
-    if any([rows * cols < len(items),
-            cols >= len(items) and rows > 1,
-            rows >= len(items) and cols > 1]):
-            raise SystemExit('bad dim')
-            
-    if flag: # split to n-sized chunks
+    if any([rows * cols < len(items), cols >= len(items) and rows > 1, rows >= len(items) and cols > 1]):
+        raise SystemExit('bad dim')
+    # split to n-sized chunks:
+    if flag:
         x = chunkifier(items, cols)
-    else: # split to n chunks
+    # split to n chunks:
+    else:
         x = np.array_split(items, rows)
+
     for row in x:
         headers = []
         data = []
@@ -117,7 +117,7 @@ def print_matrix(items: list[tuple],
         print()
 
 def print_msg(msg: str,
-    clr: str = 'y') -> None:
+              clr: str = 'y') -> None:
 	print(color(clr) + msg + color())
 
 def seconds_to_time(seconds: float,
@@ -129,7 +129,7 @@ def seconds_to_time(seconds: float,
 
 # Defining a routine for displaying a single epoch's metadata:
 def print_epoch(data: list[tuple],
-    i: int) -> None:
+                i: int) -> None:
     print_line([
         data[i][0],
         seconds_to_time(data[i][1]),
@@ -140,22 +140,20 @@ def print_epoch(data: list[tuple],
 
 # Defining a routine for displaying a summary of a training session's collected metadata:
 def print_train_summary(data: list[tuple]) -> None:
-    print_matrix([
-        ('epochs',          len(data)),
-        ('total time',      seconds_to_time(np.sum([item[1] for item in data])),),
-        ('mean train loss', np.mean([item[2] for item in data])),
-        ('mean valid loss', np.mean([item[2] for item in data])),
-        ('mean accuracy',   np.mean([item[4] for item in data])),
-    ])
+    print_header(['epochs',
+                  'total time',
+                  'mean train loss',
+                  'mean valid loss',
+                  'mean accuracy'])
+    print_line([len(data),
+                seconds_to_time(np.sum([item[1] for item in data])),
+                np.mean([item[2] for item in data]),
+                np.mean([item[3] for item in data]),
+                np.mean([item[4] for item in data])])
 
 # Defining a routine for displaying a single testing pass metadata,):
 def print_test_summary(loss: float,
-    acc: float,
-    loader: torch.utils.data.DataLoader) -> None:
-    print_matrix([
-        ('',        ''),
-        ('',        ''),
-        ('loss',    loss / len(loader)),
-        ('',        ''),
-        ('accuracy', acc / len(loader))
-    ])
+                       acc: float,
+                       loader: torch.utils.data.DataLoader) -> None:
+    print_header(['', '', 'loss', '', 'accuracy'])
+    print_line(['', '', loss/len(loader), '', acc/len(loader)])
